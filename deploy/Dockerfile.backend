@@ -6,6 +6,8 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 COPY backend/pyproject.toml backend/uv.lock* backend/README.md ./
 COPY backend/nile ./nile
+COPY backend/alembic.ini ./
+COPY backend/migrations ./migrations
 
 RUN uv sync --no-dev --frozen 2>/dev/null || uv sync --no-dev
 
