@@ -19,8 +19,9 @@ COPY backend/migrations ./migrations
 
 RUN uv sync --no-dev --frozen 2>/dev/null || uv sync --no-dev
 
-# Install Playwright Chromium browser
-RUN uv run playwright install chromium
+# Install Playwright Chromium browser for screenshots
+RUN uv run playwright install chromium \
+    && rm -rf /root/.cache/ms-playwright/ffmpeg-*
 
 EXPOSE 8000
 
