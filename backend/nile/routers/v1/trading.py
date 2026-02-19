@@ -1,12 +1,14 @@
 """Trading API endpoints — quotes, buy/sell, portfolio."""
 
+import logging
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from nile.core.database import get_db
+from nile.core.rate_limit import quote_limiter, trading_limiter
 from nile.models.portfolio import Portfolio
 from nile.models.soul_token import SoulToken
 from nile.models.trade import Trade
@@ -17,16 +19,21 @@ from nile.schemas.soul_token import (
     TradeRequest,
     TradeResponse,
 )
+from nile.services.risk_engine import is_circuit_breaker_active, run_risk_checks
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
 @router.post("/quote", response_model=QuoteResponse)
 async def get_quote(
+    request: Request,
     req: QuoteRequest,
     db: AsyncSession = Depends(get_db),
 ) -> QuoteResponse:
     """Get a price quote for a buy or sell."""
+    quote_limiter.check(request)
     # Look up soul token by person_id
     query = select(SoulToken).where(SoulToken.person_id == req.person_id)
     result = await db.execute(query)
@@ -69,15 +76,23 @@ async def get_quote(
 
 @router.post("/buy", response_model=TradeResponse, status_code=201)
 async def execute_buy(
+    request: Request,
     req: TradeRequest,
     db: AsyncSession = Depends(get_db),
 ) -> TradeResponse:
     """Execute a buy trade (off-chain record, on-chain tx async)."""
+    trading_limiter.check(request)
     query = select(SoulToken).where(SoulToken.person_id == req.person_id)
     result = await db.execute(query)
     token = result.scalar_one_or_none()
     if not token:
         raise HTTPException(404, "No soul token found for this person")
+
+    # Circuit breaker check
+    if is_circuit_breaker_active(str(token.id)):
+        raise HTTPException(
+            423, "Trading paused — circuit breaker active for this token"
+        )
 
     amount = float(req.amount)
     price = float(token.current_price_usd or 0)
@@ -105,20 +120,38 @@ async def execute_buy(
     await db.commit()
     await db.refresh(trade)
 
+    # Post-trade risk checks (async, non-blocking for response)
+    try:
+        alerts = await run_risk_checks(
+            db, soul_token_id=str(token.id), trader_address=req.trader_address
+        )
+        if alerts:
+            logger.warning("Risk alerts after buy: %s", alerts)
+    except Exception:
+        logger.exception("Risk check failed after buy")
+
     return TradeResponse.model_validate(trade)
 
 
 @router.post("/sell", response_model=TradeResponse, status_code=201)
 async def execute_sell(
+    request: Request,
     req: TradeRequest,
     db: AsyncSession = Depends(get_db),
 ) -> TradeResponse:
     """Execute a sell trade (off-chain record, on-chain tx async)."""
+    trading_limiter.check(request)
     query = select(SoulToken).where(SoulToken.person_id == req.person_id)
     result = await db.execute(query)
     token = result.scalar_one_or_none()
     if not token:
         raise HTTPException(404, "No soul token found for this person")
+
+    # Circuit breaker check
+    if is_circuit_breaker_active(str(token.id)):
+        raise HTTPException(
+            423, "Trading paused — circuit breaker active for this token"
+        )
 
     amount = float(req.amount)
     price = float(token.current_price_usd or 0)
@@ -145,6 +178,16 @@ async def execute_sell(
     await db.flush()
     await db.commit()
     await db.refresh(trade)
+
+    # Post-trade risk checks
+    try:
+        alerts = await run_risk_checks(
+            db, soul_token_id=str(token.id), trader_address=req.trader_address
+        )
+        if alerts:
+            logger.warning("Risk alerts after sell: %s", alerts)
+    except Exception:
+        logger.exception("Risk check failed after sell")
 
     return TradeResponse.model_validate(trade)
 

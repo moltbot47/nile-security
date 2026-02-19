@@ -18,6 +18,7 @@ from nile.schemas.soul_token import (
     SoulTokenResponse,
     TradeResponse,
 )
+from nile.services.risk_engine import get_active_breakers, get_token_risk_summary
 
 router = APIRouter()
 
@@ -188,6 +189,21 @@ async def list_trades(
     )
     result = await db.execute(query)
     return [TradeResponse.model_validate(t) for t in result.scalars().all()]
+
+
+@router.get("/{token_id}/risk")
+async def token_risk(
+    token_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Get risk summary for a soul token including circuit breaker status."""
+    return await get_token_risk_summary(db, str(token_id))
+
+
+@router.get("/risk/circuit-breakers")
+async def active_circuit_breakers() -> dict:
+    """Get all currently active circuit breakers."""
+    return {"active_breakers": get_active_breakers()}
 
 
 @router.get("/{token_id}/candles", response_model=list[PriceCandleResponse])

@@ -14,8 +14,10 @@ import type {
   OracleEvent,
   Person,
   PersonListItem,
+  PortfolioItem,
   PriceCandle,
   QuoteResponse,
+  RiskSummary,
   SoulToken,
   SoulTokenListItem,
   Trade,
@@ -92,6 +94,14 @@ export const api = {
       if (traderAddress) qs.set("trader_address", traderAddress);
       return fetchJSON<Trade[]>(`/trading/history?${qs}`);
     },
+    portfolio: (walletAddress: string) =>
+      fetchJSON<PortfolioItem[]>(`/trading/portfolio?wallet_address=${walletAddress}`),
+  },
+  risk: {
+    tokenRisk: (tokenId: string) =>
+      fetchJSON<RiskSummary>(`/soul-tokens/${tokenId}/risk`),
+    circuitBreakers: () =>
+      fetchJSON<{ active_breakers: Record<string, string> }>("/soul-tokens/risk/circuit-breakers"),
   },
 };
 

@@ -15,6 +15,7 @@ const navItems = [
   { href: "/ecosystem", label: "Ecosystem", icon: "globe" },
   { href: "/persons", label: "Persons", icon: "user" },
   { href: "/market", label: "Market", icon: "trending-up" },
+  { href: "/portfolio", label: "Portfolio", icon: "wallet" },
 ];
 
 export function Sidebar() {

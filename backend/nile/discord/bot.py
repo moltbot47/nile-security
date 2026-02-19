@@ -211,6 +211,11 @@ class NileBot(discord.Client):
         event_type = event.get("event_type", "")
         metadata = event.get("metadata", {})
 
+        # Soul Token market events get special handling
+        if event_type.startswith("soul."):
+            await self._handle_soul_event(event_type, metadata)
+            return
+
         # Determine target channel
         if "critical" in str(metadata.get("severity", "")):
             channel_name = "nile-alerts"
@@ -238,6 +243,151 @@ class NileBot(discord.Client):
         # On significant events, capture a fresh screenshot
         if event_type in ("scan.completed", "agent.joined"):
             asyncio.create_task(self._post_screenshot_to("nile-dashboard", "/", "dashboard"))
+
+    async def _handle_soul_event(self, event_type: str, metadata: dict) -> None:
+        """Handle Soul Token market events with rich embeds."""
+        if event_type == "soul.risk_alert":
+            await self._post_risk_alert(metadata)
+        elif event_type == "soul.token_graduated":
+            await self._post_graduation(metadata)
+        elif event_type == "soul.oracle_confirmed":
+            await self._post_oracle_confirmed(metadata)
+        elif event_type == "soul.oracle_report_pending":
+            await self._post_oracle_pending(metadata)
+        elif event_type == "soul.valuation_changed":
+            await self._post_valuation_change(metadata)
+        else:
+            # Generic soul event to feed
+            channel = self._channels.get("nile-feed")
+            if channel:
+                embed = discord.Embed(
+                    title=f"Soul Event: {event_type.replace('soul.', '')}",
+                    color=0x6366F1,
+                    timestamp=datetime.now(UTC),
+                )
+                for k, v in list(metadata.items())[:6]:
+                    embed.add_field(name=k, value=str(v), inline=True)
+                await channel.send(embed=embed)
+
+    async def _post_risk_alert(self, m: dict) -> None:
+        """Post risk alert to #nile-alerts with severity-coded embed."""
+        channel = self._channels.get("nile-alerts")
+        if not channel:
+            return
+
+        severity = m.get("severity", "warning")
+        risk_type = m.get("risk_type", "unknown")
+        color = 0xDC2626 if severity == "critical" else 0xF59E0B
+
+        embed = discord.Embed(
+            title=f"RISK ALERT: {risk_type.replace('_', ' ').upper()}",
+            description=(
+                f"**Severity:** {severity.upper()}\n"
+                f"**Token:** {m.get('token_id', 'N/A')}\n"
+                f"**Action:** {m.get('action', 'N/A')}"
+            ),
+            color=color,
+            timestamp=datetime.now(UTC),
+        )
+        if m.get("pause_minutes"):
+            embed.add_field(
+                name="Circuit Breaker",
+                value=f"Trading paused for {m['pause_minutes']} minutes",
+                inline=False,
+            )
+        details = m.get("details", {})
+        for k, v in list(details.items())[:4]:
+            embed.add_field(name=k, value=str(v), inline=True)
+        embed.set_footer(text="NILE Risk Engine")
+        await channel.send(embed=embed)
+
+    async def _post_graduation(self, m: dict) -> None:
+        """Post graduation celebration to #nile-feed."""
+        channel = self._channels.get("nile-feed")
+        if not channel:
+            return
+
+        symbol = m.get("token_symbol", "???")
+        reserve = m.get("reserve_eth", 0)
+        embed = discord.Embed(
+            title=f"${symbol} GRADUATED!",
+            description=(
+                f"Token **${symbol}** has graduated from bonding curve "
+                f"to AMM with **{reserve:.2f} ETH** in reserve.\n\n"
+                f"Liquidity deployed to Uniswap V3. LP tokens burned "
+                f"for permanent, unruggable liquidity."
+            ),
+            color=0x22C55E,
+            timestamp=datetime.now(UTC),
+        )
+        embed.set_footer(text="NILE Soul Token Market")
+        await channel.send(embed=embed)
+
+    async def _post_oracle_confirmed(self, m: dict) -> None:
+        """Post confirmed oracle event to #nile-feed."""
+        channel = self._channels.get("nile-feed")
+        if not channel:
+            return
+
+        embed = discord.Embed(
+            title="Oracle Event Confirmed",
+            description=(
+                f"**Person:** {m.get('person_id', 'N/A')}\n"
+                f"**Impact:** {m.get('impact_score', 0):+d}\n"
+                f"**Type:** {m.get('event_type', 'N/A')}\n"
+                f"Valuation re-computation triggered."
+            ),
+            color=0x3B82F6,
+            timestamp=datetime.now(UTC),
+        )
+        embed.set_footer(text="NILE Oracle Network")
+        await channel.send(embed=embed)
+
+    async def _post_oracle_pending(self, m: dict) -> None:
+        """Post pending oracle report for cross-verification."""
+        channel = self._channels.get("nile-feed")
+        if not channel:
+            return
+
+        headline = m.get("headline", "")
+        embed = discord.Embed(
+            title="New Oracle Report — Awaiting Verification",
+            description=(
+                f"**{headline[:200]}**\n\n"
+                f"Source: {m.get('source', 'N/A')}\n"
+                f"Oracle agents: please cross-verify."
+            ),
+            color=0xF59E0B,
+            timestamp=datetime.now(UTC),
+        )
+        embed.set_footer(text="NILE Oracle Network")
+        await channel.send(embed=embed)
+
+    async def _post_valuation_change(self, m: dict) -> None:
+        """Post significant valuation change to #nile-feed."""
+        channel = self._channels.get("nile-feed")
+        if not channel:
+            return
+
+        old_s = m.get("old_score", 0)
+        new_s = m.get("new_score", 0)
+        change = m.get("change_pct", 0)
+        direction = "up" if new_s > old_s else "down"
+        color = 0x22C55E if direction == "up" else 0xEF4444
+
+        embed = discord.Embed(
+            title=f"Valuation Update ({direction.upper()} {change:.1f}%)",
+            description=(
+                f"**Person:** {m.get('person_id', 'N/A')}\n"
+                f"**Score:** {old_s:.1f} → {new_s:.1f}\n"
+                f"**Fair Value:** ${m.get('fair_value_usd', 0):.2f}\n"
+                f"Market makers alerted to adjust spreads."
+            ),
+            color=color,
+            timestamp=datetime.now(UTC),
+        )
+        embed.set_footer(text="NILE Valuation Engine")
+        await channel.send(embed=embed)
 
     # --- Screenshot Loop ---
 
@@ -310,6 +460,11 @@ class NileBot(discord.Client):
             "task.created.exploit": "Exploit Verification Requested",
             "knowledge.pattern_added": "New Pattern Discovered",
             "agent.message": "Agent Communication",
+            "soul.risk_alert": "Risk Alert",
+            "soul.token_graduated": "Token Graduated",
+            "soul.oracle_confirmed": "Oracle Event Confirmed",
+            "soul.oracle_report_pending": "Oracle Report Pending",
+            "soul.valuation_changed": "Valuation Updated",
         }
         return titles.get(event_type, event_type)
 

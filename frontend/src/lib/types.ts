@@ -273,3 +273,27 @@ export interface QuoteResponse {
   price_impact_pct: number;
   estimated_price: number;
 }
+
+export interface PortfolioItem {
+  id: string;
+  soul_token_id: string;
+  token_symbol: string | null;
+  person_name: string | null;
+  balance: number;
+  avg_buy_price_eth: number;
+  total_invested_eth: number;
+  realized_pnl_eth: number;
+  current_price_eth: number | null;
+  unrealized_pnl_eth: number | null;
+}
+
+export interface RiskSummary {
+  soul_token_id: string;
+  circuit_breaker_active: boolean;
+  circuit_breaker_expiry: string | null;
+  last_hour: {
+    trade_count: number;
+    unique_traders: number;
+    total_volume_eth: number;
+  };
+}
