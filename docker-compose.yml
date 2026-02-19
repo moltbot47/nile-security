@@ -59,8 +59,7 @@ services:
   discord-bot:
     build:
       context: .
-      dockerfile: deploy/Dockerfile.backend
-    command: ["uv", "run", "python", "-m", "nile.discord.bot"]
+      dockerfile: deploy/Dockerfile.discord
     environment:
       NILE_DATABASE_URL: postgresql+asyncpg://nile:nile@postgres:5432/nile
       NILE_REDIS_URL: redis://redis:6379/0
