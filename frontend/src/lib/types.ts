@@ -188,3 +188,88 @@ export interface CategoryCount {
   category: string;
   count: number;
 }
+
+export interface SoulToken {
+  id: string;
+  person_id: string;
+  token_address: string | null;
+  curve_address: string | null;
+  name: string;
+  symbol: string;
+  phase: string;
+  chain: string;
+  current_price_eth: number;
+  current_price_usd: number;
+  market_cap_usd: number;
+  total_supply: number;
+  reserve_balance_eth: number;
+  volume_24h_usd: number;
+  price_change_24h_pct: number;
+  holder_count: number;
+  nile_valuation_total: number;
+  graduation_threshold_eth: number;
+  graduated_at: string | null;
+  creator_address: string | null;
+  created_at: string;
+  person_name: string | null;
+  person_slug: string | null;
+  person_category: string | null;
+}
+
+export interface SoulTokenListItem {
+  id: string;
+  name: string;
+  symbol: string;
+  phase: string;
+  current_price_usd: number;
+  market_cap_usd: number;
+  volume_24h_usd: number;
+  price_change_24h_pct: number;
+  holder_count: number;
+  person_name: string | null;
+  person_slug: string | null;
+}
+
+export interface MarketOverview {
+  total_tokens: number;
+  total_market_cap_usd: number;
+  total_volume_24h_usd: number;
+  graduating_soon_count: number;
+}
+
+export interface Trade {
+  id: string;
+  soul_token_id: string;
+  side: string;
+  token_amount: number;
+  eth_amount: number;
+  price_eth: number;
+  price_usd: number;
+  fee_total_eth: number;
+  tx_hash: string | null;
+  trader_address: string | null;
+  phase: string;
+  created_at: string;
+}
+
+export interface PriceCandle {
+  open_time: string;
+  close_time: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume_eth: number;
+  volume_usd: number;
+  trade_count: number;
+}
+
+export interface QuoteResponse {
+  person_id: string;
+  side: string;
+  input_amount: number;
+  output_amount: number;
+  fee: number;
+  price_impact_pct: number;
+  estimated_price: number;
+}

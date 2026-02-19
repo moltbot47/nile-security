@@ -9,10 +9,16 @@ import type {
   DefenderKPIs,
   EcosystemEvent,
   LeaderboardEntry,
+  MarketOverview,
   NileScore,
   OracleEvent,
   Person,
   PersonListItem,
+  PriceCandle,
+  QuoteResponse,
+  SoulToken,
+  SoulTokenListItem,
+  Trade,
   ValuationSnapshot,
 } from "./types";
 
@@ -66,6 +72,26 @@ export const api = {
       fetchJSON<ValuationSnapshot[]>(`/persons/${id}/valuation-history?limit=${limit}`),
     oracleEvents: (id: string, status?: string) =>
       fetchJSON<OracleEvent[]>(`/persons/${id}/oracle-events${status ? `?status=${status}` : ""}`),
+  },
+  soulTokens: {
+    list: (sort = "market_cap", limit = 50) =>
+      fetchJSON<SoulTokenListItem[]>(`/soul-tokens?sort=${sort}&limit=${limit}`),
+    get: (id: string) => fetchJSON<SoulToken>(`/soul-tokens/${id}`),
+    marketOverview: () => fetchJSON<MarketOverview>("/soul-tokens/market-overview"),
+    graduatingSoon: () => fetchJSON<SoulTokenListItem[]>("/soul-tokens/graduating-soon"),
+    trades: (id: string, limit = 50) =>
+      fetchJSON<Trade[]>(`/soul-tokens/${id}/trades?limit=${limit}`),
+    candles: (id: string, interval = "1h", limit = 100) =>
+      fetchJSON<PriceCandle[]>(`/soul-tokens/${id}/candles?interval=${interval}&limit=${limit}`),
+  },
+  trading: {
+    quote: (personId: string, side: string, amount: number) =>
+      fetchJSON<QuoteResponse>(`/trading/quote?person_id=${personId}&side=${side}&amount=${amount}`),
+    history: (traderAddress?: string, limit = 50) => {
+      const qs = new URLSearchParams({ limit: String(limit) });
+      if (traderAddress) qs.set("trader_address", traderAddress);
+      return fetchJSON<Trade[]>(`/trading/history?${qs}`);
+    },
   },
 };
 

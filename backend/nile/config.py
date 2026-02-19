@@ -28,6 +28,16 @@ class Settings(BaseSettings):
     discord_token: str = ""
     discord_guild_id: str = ""
 
+    # Chain / Web3
+    chain_rpc_url: str = "https://mainnet.base.org"
+    chain_id: int = 8453  # Base mainnet
+    deployer_private_key: str = ""
+    factory_address: str = ""
+    router_address: str = ""
+    treasury_address: str = ""
+    oracle_address: str = ""
+    eth_price_feed: str = "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70"  # Chainlink ETH/USD on Base
+
     model_config = {"env_file": ".env", "env_prefix": "NILE_"}
 
 
