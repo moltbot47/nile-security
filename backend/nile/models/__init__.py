@@ -1,8 +1,13 @@
 """SQLAlchemy models for NILE Security."""
 
+# Agent ecosystem models
+from nile.models.agent import Agent
+from nile.models.agent_contribution import AgentContribution
+from nile.models.agent_message import AgentMessage
 from nile.models.base import Base
 from nile.models.benchmark_run import BenchmarkRun
 from nile.models.contract import Contract
+from nile.models.ecosystem_event import EcosystemEvent
 from nile.models.kpi_metric import KPIMetric
 from nile.models.nile_score import NileScore
 from nile.models.scan_job import ScanJob
@@ -16,4 +21,8 @@ __all__ = [
     "NileScore",
     "ScanJob",
     "Vulnerability",
+    "Agent",
+    "AgentContribution",
+    "AgentMessage",
+    "EcosystemEvent",
 ]

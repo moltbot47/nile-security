@@ -11,6 +11,8 @@ const navItems = [
   { href: "/kpis/defender", label: "Defender KPIs", icon: "shield" },
   { href: "/benchmarks", label: "Benchmarks", icon: "bar-chart" },
   { href: "/scans", label: "Scans", icon: "search" },
+  { href: "/agents", label: "Agents", icon: "users" },
+  { href: "/ecosystem", label: "Ecosystem", icon: "globe" },
 ];
 
 export function Sidebar() {
@@ -45,8 +47,8 @@ export function Sidebar() {
 
       <div className="mt-auto pt-4 border-t border-gray-800">
         <div className="text-xs text-gray-600">
-          <p>NILE v0.1.0</p>
-          <p>EVMbench Integration</p>
+          <p>NILE v0.2.0</p>
+          <p>Agent Ecosystem</p>
         </div>
       </div>
     </aside>

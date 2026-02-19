@@ -21,7 +21,12 @@ class Settings(BaseSettings):
 
     # Security
     api_key: str = ""
+    jwt_secret: str = "nile-dev-secret-change-me"  # noqa: S105
     cors_origins: list[str] = ["http://localhost:3000"]
+
+    # Discord
+    discord_token: str = ""
+    discord_guild_id: str = ""
 
     model_config = {"env_file": ".env", "env_prefix": "NILE_"}
 

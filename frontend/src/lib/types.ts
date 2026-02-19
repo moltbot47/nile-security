@@ -60,3 +60,64 @@ export interface BenchmarkBaseline {
 }
 
 export type NileGrade = "A+" | "A" | "B" | "C" | "D" | "F";
+
+// --- Agent Ecosystem Types ---
+
+export interface Agent {
+  id: string;
+  name: string;
+  description: string | null;
+  version: string;
+  owner_id: string;
+  capabilities: string[];
+  status: string;
+  nile_score_total: number;
+  nile_score_name: number;
+  nile_score_image: number;
+  nile_score_likeness: number;
+  nile_score_essence: number;
+  total_points: number;
+  total_contributions: number;
+  is_online: boolean;
+  created_at: string;
+}
+
+export interface AgentContribution {
+  id: string;
+  contribution_type: string;
+  severity_found: string | null;
+  verified: boolean;
+  points_awarded: number;
+  summary: string | null;
+  created_at: string;
+}
+
+export interface LeaderboardEntry {
+  id: string;
+  name: string;
+  total_points: number;
+  total_contributions: number;
+  nile_score_total: number;
+  capabilities: string[];
+  is_online: boolean;
+}
+
+export interface EcosystemEvent {
+  id: number;
+  event_type: string;
+  actor_id: string | null;
+  target_id: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface ScanJob {
+  id: string;
+  contract_id: string;
+  status: string;
+  mode: string;
+  agent: string;
+  created_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+}
