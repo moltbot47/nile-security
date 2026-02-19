@@ -13,6 +13,8 @@ const navItems = [
   { href: "/scans", label: "Scans", icon: "search" },
   { href: "/agents", label: "Agents", icon: "users" },
   { href: "/ecosystem", label: "Ecosystem", icon: "globe" },
+  { href: "/persons", label: "Persons", icon: "user" },
+  { href: "/market", label: "Market", icon: "trending-up" },
 ];
 
 export function Sidebar() {

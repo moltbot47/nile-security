@@ -121,3 +121,70 @@ export interface ScanJob {
   started_at: string | null;
   finished_at: string | null;
 }
+
+// --- Soul Token Market Types ---
+
+export interface Person {
+  id: string;
+  display_name: string;
+  slug: string;
+  bio: string | null;
+  avatar_url: string | null;
+  banner_url: string | null;
+  verification_level: string;
+  category: string;
+  tags: string[];
+  social_links: Record<string, string>;
+  nile_name_score: number;
+  nile_image_score: number;
+  nile_likeness_score: number;
+  nile_essence_score: number;
+  nile_total_score: number;
+  created_at: string;
+  token_symbol: string | null;
+  token_price_usd: number | null;
+  token_market_cap_usd: number | null;
+}
+
+export interface PersonListItem {
+  id: string;
+  display_name: string;
+  slug: string;
+  avatar_url: string | null;
+  verification_level: string;
+  category: string;
+  nile_total_score: number;
+  token_symbol: string | null;
+  token_price_usd: number | null;
+  token_market_cap_usd: number | null;
+}
+
+export interface ValuationSnapshot {
+  id: string;
+  name_score: number;
+  image_score: number;
+  likeness_score: number;
+  essence_score: number;
+  total_score: number;
+  fair_value_usd: number;
+  trigger_type: string;
+  computed_at: string;
+}
+
+export interface OracleEvent {
+  id: string;
+  event_type: string;
+  source: string;
+  headline: string;
+  impact_score: number;
+  confidence: number;
+  status: string;
+  confirmations: number;
+  rejections: number;
+  created_at: string;
+}
+
+export interface CategoryCount {
+  category: string;
+  count: number;
+}

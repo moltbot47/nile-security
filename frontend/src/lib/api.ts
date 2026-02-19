@@ -4,11 +4,16 @@ import type {
   AssetHealthItem,
   AttackerKPIs,
   BenchmarkBaseline,
+  CategoryCount,
   Contract,
   DefenderKPIs,
   EcosystemEvent,
   LeaderboardEntry,
   NileScore,
+  OracleEvent,
+  Person,
+  PersonListItem,
+  ValuationSnapshot,
 } from "./types";
 
 const BASE_URL = "/api/v1";
@@ -43,6 +48,24 @@ export const api = {
   },
   events: {
     history: (limit = 50) => fetchJSON<EcosystemEvent[]>(`/events/history?limit=${limit}`),
+  },
+  persons: {
+    list: (params?: { category?: string; search?: string; sort?: string; limit?: number }) => {
+      const qs = new URLSearchParams();
+      if (params?.category) qs.set("category", params.category);
+      if (params?.search) qs.set("search", params.search);
+      if (params?.sort) qs.set("sort", params.sort);
+      if (params?.limit) qs.set("limit", String(params.limit));
+      const q = qs.toString();
+      return fetchJSON<PersonListItem[]>(`/persons${q ? `?${q}` : ""}`);
+    },
+    get: (id: string) => fetchJSON<Person>(`/persons/${id}`),
+    trending: (limit = 20) => fetchJSON<PersonListItem[]>(`/persons/trending?limit=${limit}`),
+    categories: () => fetchJSON<CategoryCount[]>("/persons/categories"),
+    valuationHistory: (id: string, limit = 50) =>
+      fetchJSON<ValuationSnapshot[]>(`/persons/${id}/valuation-history?limit=${limit}`),
+    oracleEvents: (id: string, status?: string) =>
+      fetchJSON<OracleEvent[]>(`/persons/${id}/oracle-events${status ? `?status=${status}` : ""}`),
   },
 };
 

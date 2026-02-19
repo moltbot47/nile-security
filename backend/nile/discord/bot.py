@@ -5,6 +5,7 @@ posts ecosystem events and browser screenshots of dashboard pages.
 """
 
 import asyncio
+import contextlib
 import json
 import logging
 from datetime import UTC, datetime
@@ -135,24 +136,28 @@ class NileBot(discord.Client):
             except discord.Forbidden:
                 logger.warning("Cannot create category — missing permissions")
                 category = None
-        else:
-            # Ensure bot has permissions on existing category
-            try:
-                await category.set_permissions(
-                    guild.me,
-                    read_messages=True,
-                    send_messages=True,
-                    attach_files=True,
-                    embed_links=True,
-                )
-            except discord.Forbidden:
-                logger.warning("Cannot update category permissions")
-
-        # Create managed channels
+        # Create managed channels (with bot permissions in overwrites)
+        bot_overwrites = {
+            guild.me: discord.PermissionOverwrite(
+                read_messages=True,
+                send_messages=True,
+                attach_files=True,
+                embed_links=True,
+            ),
+        }
         for channel_name in MANAGED_CHANNELS:
             existing = discord.utils.get(guild.text_channels, name=channel_name)
             if existing:
                 self._channels[channel_name] = existing
+                # Try to ensure we can send (ignore if no Manage Roles)
+                with contextlib.suppress(discord.Forbidden):
+                    await existing.set_permissions(
+                        guild.me,
+                        read_messages=True,
+                        send_messages=True,
+                        attach_files=True,
+                        embed_links=True,
+                    )
             else:
                 try:
                     topic = self._channel_topic(channel_name)
@@ -160,6 +165,7 @@ class NileBot(discord.Client):
                         channel_name,
                         category=category,
                         topic=topic,
+                        overwrites=bot_overwrites,
                         reason="NILE bot auto-created",
                     )
                     self._channels[channel_name] = ch
