@@ -65,12 +65,12 @@ services:
       NILE_DATABASE_URL: postgresql+asyncpg://nile:nile@postgres:5432/nile
       NILE_REDIS_URL: redis://redis:6379/0
       NILE_DISCORD_TOKEN: ${NILE_DISCORD_TOKEN:-}
-      NILE_DISCORD_GUILD_ID: ${NILE_DISCORD_GUILD_ID:-}
+      NILE_DISCORD_GUILD_ID: ${NILE_DISCORD_GUILD_ID:-1469930844561871034}
     depends_on:
+      frontend:
+        condition: service_started
       redis:
         condition: service_healthy
-    profiles:
-      - discord
 
   frontend:
     build:
