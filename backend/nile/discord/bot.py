@@ -83,19 +83,22 @@ class NileBot(discord.Client):
         # Post startup message
         feed = self._channels.get("nile-feed")
         if feed:
-            embed = discord.Embed(
-                title="NILE Security Intelligence — Online",
-                description=(
-                    "Agent ecosystem monitoring active.\n"
-                    "Dashboard: http://159.203.138.96\n\n"
-                    "Channels created for live updates, screenshots, "
-                    "and alerts."
-                ),
-                color=0x0EA5E9,
-                timestamp=datetime.now(UTC),
-            )
-            embed.set_footer(text="NILE v0.2.0")
-            await feed.send(embed=embed)
+            try:
+                embed = discord.Embed(
+                    title="NILE Security Intelligence — Online",
+                    description=(
+                        "Agent ecosystem monitoring active.\n"
+                        "Dashboard: http://159.203.138.96\n\n"
+                        "Channels created for live updates, screenshots, "
+                        "and alerts."
+                    ),
+                    color=0x0EA5E9,
+                    timestamp=datetime.now(UTC),
+                )
+                embed.set_footer(text="NILE v0.2.0")
+                await feed.send(embed=embed)
+            except discord.Forbidden:
+                logger.warning("Cannot send to #nile-feed — missing Send Messages")
 
         # Start background tasks
         self._listener_task = asyncio.create_task(self._listen_events())
@@ -111,14 +114,39 @@ class NileBot(discord.Client):
         category = discord.utils.get(guild.categories, name=NILE_CATEGORY)
         if not category:
             try:
+                overwrites = {
+                    guild.default_role: discord.PermissionOverwrite(
+                        read_messages=True, send_messages=False
+                    ),
+                    guild.me: discord.PermissionOverwrite(
+                        read_messages=True,
+                        send_messages=True,
+                        attach_files=True,
+                        embed_links=True,
+                        manage_channels=True,
+                    ),
+                }
                 category = await guild.create_category(
                     NILE_CATEGORY,
+                    overwrites=overwrites,
                     reason="NILE Security Intelligence Platform",
                 )
                 logger.info("Created category: %s", NILE_CATEGORY)
             except discord.Forbidden:
                 logger.warning("Cannot create category — missing permissions")
                 category = None
+        else:
+            # Ensure bot has permissions on existing category
+            try:
+                await category.set_permissions(
+                    guild.me,
+                    read_messages=True,
+                    send_messages=True,
+                    attach_files=True,
+                    embed_links=True,
+                )
+            except discord.Forbidden:
+                logger.warning("Cannot update category permissions")
 
         # Create managed channels
         for channel_name in MANAGED_CHANNELS:
