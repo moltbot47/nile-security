@@ -20,7 +20,10 @@ class Portfolio(UUIDMixin, TimestampMixin, Base):
     balance: Mapped[float] = mapped_column(Numeric(28, 18), default=0)
     avg_buy_price_eth: Mapped[float] = mapped_column(Numeric(20, 10), default=0)
     total_invested_eth: Mapped[float] = mapped_column(Numeric(20, 10), default=0)
+    total_sold_eth: Mapped[float] = mapped_column(Numeric(20, 10), default=0)
     realized_pnl_eth: Mapped[float] = mapped_column(Numeric(20, 10), default=0)
+    current_value_eth: Mapped[float] = mapped_column(Numeric(20, 10), default=0)
+    unrealized_pnl_eth: Mapped[float] = mapped_column(Numeric(20, 10), default=0)
 
     __table_args__ = (
         UniqueConstraint(
